@@ -18,8 +18,6 @@ from Hopfield import Hopfield
 def str2float(strlist):
     return [round(float(i)) if float(i).is_integer() else float(i) for i in strlist]
 
-
-
 class gui():
     def __init__(self, app_name, app_width, app_height):
         self.file_name = ''
@@ -41,9 +39,11 @@ class gui():
         self.setting_frame = tk.Frame(self.container, width=500, height=740, bg='black')
 
         self.canvas = FigureCanvasTkAgg(master = self.graph_frame)
-        self.canvas.get_tk_widget().config(width=500, height=500)
+        self.canvas.get_tk_widget().config(width=800, height=700)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)  # Ensure the canvas is packed correctly
 
+        self.canvas_2 = FigureCanvasTkAgg(master = self.setting_frame)
+        self.canvas_2.get_tk_widget().config(width=500, height=740)
 
         self.is_hopfield = True
         # Define Our Images
@@ -82,7 +82,7 @@ class gui():
         self.map_size_label = tk.Label(self.setting_frame, text='Map Size:', bg='white')
         self.map_size_text = tk.Label(self.setting_frame, text='-', bg='white')
         self.sigma_label = tk.Label(self.setting_frame, text='Sigma:', bg='white')
-        self.sigma_box = tk.Spinbox(self.setting_frame,  format="%.2f", increment=0.1, from_=0.0,to=1, width=5, bg='white', textvariable=tk.StringVar(value='1.0'))
+        self.sigma_box = tk.Spinbox(self.setting_frame,  format="%.2f", increment=0.1, from_=0.0, width=5, bg='white', textvariable=tk.StringVar(value='3.0'))
         self.train_btn = tk.Button(master = self.setting_frame,  
                      command = self.train_model, 
                      height = 2,  
@@ -97,12 +97,13 @@ class gui():
                      highlightbackground='white')
 
         # components placing
-        self.setting_frame.place(x=5, y=280)
-        self.graph_frame.place(x=480, y=5)
-        self.canvas.get_tk_widget().place(x=170, y=150)
+        self.setting_frame.place(x=5, y=20)
+        self.graph_frame.place(x=515, y=5)
+        self.canvas.get_tk_widget().place(x=10, y=30)
 
 
         self.figure = None
+        self.figure_2 = None
         # toggle and data dropdown
         self.toggle_canvas.grid(row=0, column=0, padx=5, pady=5, sticky='w')
         self.dataDropDown.grid(row=0, column=1, padx=5, pady=5, sticky='w')
@@ -119,11 +120,20 @@ class gui():
         self.lrn_rate_box.grid(row=6, column=1, padx=5, pady=5, sticky='w')
         self.train_btn.grid(row=8, column=0, padx=5, pady=5, sticky='w')
         self.save_graph_frame_btn.grid(row=8, column=1, padx=5, pady=5, sticky='w')
-        
+        self.canvas_2.get_tk_widget().grid(row=9, column=0, columnspan=2, padx=5, pady=5, sticky='w')
+
     
     # Determine is hopfield or SOM
     def switch(self):
         self.data = None
+        # clear canvas 1 and 2
+        if self.figure:
+            self.figure.clf()
+            self.canvas.draw()
+        if self.figure_2:
+            self.figure_2.clf()
+            self.canvas_2.draw()
+
         if self.is_hopfield:
             self.toggle_canvas.create_image(0, 0, anchor='nw', image=self.imgSOM)
             self.is_hopfield = False
@@ -212,7 +222,7 @@ class gui():
             print(e)
 
     def train_model(self):
-        print(self.data, self.get_current_epoch(), self.get_current_lrn_rate())
+        # print(self.data, self.get_current_epoch(), self.get_current_lrn_rate())
         if self.data is None:
             messagebox.showerror('Error', 'Please select a dataset')
             return
@@ -221,30 +231,38 @@ class gui():
             if self.is_hopfield:
                 model = Hopfield(self.data)
             else:
-                model = SOM(self.data, self.get_current_epoch(), self.get_current_lrn_rate(), self.get_current_sigma())
+                self.train_btn.config(state="disabled")
+                self.toggle_canvas.unbind("<Button-1>")
+
+                model = SOM(self.dataDropDown.get(), self.data, self.get_current_epoch(), self.get_current_lrn_rate(), self.get_current_sigma())
                 self.map_size_text.config(text=str(model.get_map_size()))
                 
-                # Define a callback function for real-time GUI updates
-                def update_gui_with_fig(fig):
-                    self.update_canvas(fig)
-                    self.container.update_idletasks()  # Refresh the GUI immediately
+                def update_canvas(fig, fig2):
+                    if self.figure:
+                        self.figure.clf()  # Clear the previous figure
+                    self.figure = fig
+                    self.canvas.figure = self.figure
+                    self.canvas.draw()
+                    self.canvas.get_tk_widget().update()
+
+                    if self.figure_2:
+                        self.figure_2.clf()
+                    self.figure_2 = fig2
+                    self.canvas_2.figure = self.figure_2
+                    self.canvas_2.draw()
+                    self.canvas_2.get_tk_widget().update()
 
                 # Train the model with the update callback
-                model.train(update_callback=update_gui_with_fig)
+                model.train(update_callback=update_canvas)
+                self.train_btn.config(state="normal")
+                self.toggle_canvas.bind("<Button-1>", lambda _: self.switch())
+                
+                
 
         except Exception as e:
             print(e)
             messagebox.showerror('Error', 'Training failed')
             return
-
-    def update_canvas(self, fig):
-        if self.figure:
-            self.figure.clf()  # Clear the previous figure
-        self.figure = fig
-        self.canvas.figure = self.figure
-        self.canvas.draw_idle()  # Use draw_idle to update the canvas efficiently
-        self.canvas.get_tk_widget().place(x=170, y=150)
-
     
     def get_current_epoch(self):
         return int(self.epoch_box.get())

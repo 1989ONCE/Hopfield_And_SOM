@@ -8,7 +8,8 @@ import matplotlib.colors as mcolors
 # Use the SOM algorithm to cluster the data
 
 class SOM():
-    def __init__(self, data, epoch_limit, lrn_rate, sigma):
+    def __init__(self, dataset_name, data, epoch_limit, lrn_rate, sigma):
+        self.dataset_name = dataset_name
         self.data = np.array(data, dtype=np.float64)
         self.init_lrn_rate = lrn_rate
         self.lrn_rate = lrn_rate # initial learning rate
@@ -51,8 +52,8 @@ class SOM():
             high=1,
             size=(self.map[0], self.map[1], self.input_dim)
         )
-        print('Initial Weight:', self.weight)
-        print('Weight Shape:', self.weight.shape)
+        # print('Initial Weight:', self.weight)
+        # print('Weight Shape:', self.weight.shape)
 
     def normalize_whole_list(self, x):
         self.mean = np.mean(x, axis=0, dtype=np.float64)
@@ -64,35 +65,38 @@ class SOM():
         return x * (self.std) + self.mean
 
     def train(self, update_callback=None):
-        self.fig_list = []
-        
-        for epoch in range(1, self.epoch_limit + 1):
-            init_time = time.time()
-            self.update_sigma(epoch)
-            self.update_lrn_rate(epoch)
+        self.epoch = 0
+        try:
+            for epoch in range(1, self.epoch_limit + 1):
+                init_time = time.time()
+                self.update_sigma(epoch)
+                self.update_lrn_rate(epoch)
 
-            QE = 0
-            for i in range(len(self.norm_input)):
-                x = self.norm_input[i]
-                bmu, bmu_index, bmu_dist = self.find_best_matching_unit(x)
-                QE += bmu_dist
-                for i in range(self.map[0]):
-                    for j in range(self.map[1]):
-                        dist_to_bmu = self.euclidean_distance(bmu_index, np.array([i, j]))
-                        if dist_to_bmu <= self.sigma:
-                            self.weight[i][j] += self.lrn_rate * self.neighborhood_influence(dist_to_bmu, self.sigma) * (x - self.weight[i][j])
+                QE = 0
+                for i in range(len(self.norm_input)):
+                    x = self.norm_input[i]
+                    bmu, bmu_index, bmu_dist = self.find_best_matching_unit(x)
+                    QE += bmu_dist
+                    for i in range(self.map[0]):
+                        for j in range(self.map[1]):
+                            dist_to_bmu = self.euclidean_distance(bmu_index, np.array([i, j]))
+                            if dist_to_bmu <= self.sigma:
+                                self.weight[i][j] += self.lrn_rate * self.neighborhood_influence(dist_to_bmu, self.sigma) * (x - self.weight[i][j])
 
-            QE /= len(self.norm_input)
-            process_time = time.time() - init_time
-            fig = self.umatrix_visualize(epoch, QE, process_time)
-            self.fig_list.append(fig)
-            
-            # Call the callback function to update the GUI
-            if update_callback:
-                update_callback(fig)
+                QE /= len(self.norm_input)
+                process_time = time.time() - init_time
+                fig, fig2 = self.umatrix_visualize(epoch, QE, process_time, self.sigma, self.lrn_rate)
+                
+                # Call the callback function to update the GUI
+                if update_callback:
+                    update_callback(fig, fig2)
 
-            print(f'Epoch {epoch} completed. Process Time: {process_time:.2f}s, QE: {QE:.4f}')
-        print('Training is completely done!')
+                print(f'Epoch {epoch} completed. Process Time: {process_time:.5f}s, QE: {QE:.4f}')
+            print('Training is completely done!')
+            return True
+        except KeyboardInterrupt:
+            print('Training interrupted by user.')
+            return True
 
 
     def find_best_matching_unit(self, x):
@@ -130,17 +134,55 @@ class SOM():
 
     def get_map_size(self):
         return self.map
-    
-    def umatrix_visualize(self, epoch, qe, process_time):
+
+    def umatrix_visualize(self, epoch, qe, process_time, sigma, lrn_rate):
         u_matrix = self.calculate_u_matrix()
-        fig, ax = plt.subplots(figsize=(5, 5))  # Adjust the figure size to fit the canvas
+        fig, ax = plt.subplots(figsize=(7, 7))  # Adjusted figure size for clarity
+        fig2, ax2 = plt.subplots(figsize=(4, 4))  # fig for sigma and lrn_rate changes over time
+
+        # Plotting the U-Matrix
         cax = ax.imshow(u_matrix, cmap='viridis', interpolation='nearest')
         plt.colorbar(cax, ax=ax, orientation='vertical', label='Distance')
-        ax.set_title(f'U-Matrix at Epoch {epoch}\nQuantization Error: {qe:.4f}, Time: {process_time:.2f}s')
+        ax.set_title(f'Dataset: {self.dataset_name}\nU-Matrix at Epoch {epoch}\nQuantization Error: {qe:.4f}, Time: {process_time:.5f}s \nSigma: {sigma:.4f}, Learning Rate: {lrn_rate:.4f}')
+        
+        # Adding axis labels to clarify the neuron grid
+        ax.set_xlabel('Neuron Index (X)', fontsize=10)
+        ax.set_ylabel('Neuron Index (Y)', fontsize=10)
+
+        # Plotting the winner neurons with class labels inside squares
+        markers = ['o', 's', 'D', '^', '*']  # Add more markers if needed
+        colors = list(mcolors.TABLEAU_COLORS.values())  # Use Tableau colors for distinct classes
+        for cnt, x in enumerate(self.norm_input):
+            _, winner_idx, _ = self.find_best_matching_unit(x)
+            label = int(self.label[cnt])  # Assuming label is already an integer class
+            ax.text(
+                winner_idx[1],  # x-coordinate of neuron square
+                winner_idx[0],  # y-coordinate of neuron square
+                str(label),  # Text to display (the class label)
+                color=colors[label % len(colors)],
+                fontsize=10,
+                ha='center',
+                va='center',
+                bbox=dict(facecolor='white', alpha=0.7, edgecolor='none')  # Add background for better visibility
+            )
+
+        # plot sigma and lrn_rate changes over time
+        ax2.plot(range(1, epoch + 1), [self.init_sigma * np.exp(-i / self.time_constant) for i in range(1, epoch + 1)], label='Sigma')
+        ax2.plot(range(1, epoch + 1), [self.init_lrn_rate * np.exp(-i / self.time_constant) for i in range(1, epoch + 1)], label='Learning Rate')
+        ax2.set_title('Sigma and Learning Rate Decay over Time', fontsize=10)
+        ax2.set_xlabel('Epoch')
+        ax2.set_ylabel('Value')
+        ax2.legend()
+        ax2.grid()
+        
+        
         ax.set_xticks([])
         ax.set_yticks([])
+        
         plt.tight_layout()
-        return fig
+        return fig, fig2
+
+
 
 
     # U-Matrix: Unified Distance Matrix
@@ -161,7 +203,3 @@ class SOM():
                 if distances:
                     u_matrix[i, j] = np.mean(distances)
         return u_matrix
-
-    
-    def get_fig_list(self):
-        return self.fig_list
