@@ -149,8 +149,6 @@ class SOM():
         ax.set_xlabel('Neuron Index (X)', fontsize=10)
         ax.set_ylabel('Neuron Index (Y)', fontsize=10)
 
-        # Plotting the winner neurons with class labels inside squares
-        markers = ['o', 's', 'D', '^', '*']  # Add more markers if needed
         colors = list(mcolors.TABLEAU_COLORS.values())  # Use Tableau colors for distinct classes
         for cnt, x in enumerate(self.norm_input):
             _, winner_idx, _ = self.find_best_matching_unit(x)
@@ -181,9 +179,6 @@ class SOM():
         
         plt.tight_layout()
         return fig, fig2
-
-
-
 
     # U-Matrix: Unified Distance Matrix
     # 顯示神經元之間的距離或相似性，幫助識別聚類結構。
