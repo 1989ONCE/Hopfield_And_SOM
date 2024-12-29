@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image, ImageGrab
-import pygetwindow
-import pyautogui
+# import pygetwindow
+# import pyautogui
 import platform
 import time
 from SOM import SOM
@@ -115,12 +115,12 @@ class gui():
                         width = 10,
                         text = "Next",
                         highlightbackground='white')
-        self.save_graph_frame_btn = tk.Button(master = self.setting_frame,  
-                     command = self.save_graph_frame, 
-                     height = 2,  
-                     width = 16, 
-                     text = "Take screenshot",
-                     highlightbackground='white')
+        # self.save_graph_frame_btn = tk.Button(master = self.setting_frame,  
+        #              command = self.save_graph_frame, 
+        #              height = 2,  
+        #              width = 16, 
+        #              text = "Take screenshot",
+        #              highlightbackground='white')
 
         # components placing
         self.setting_frame.place(x=10, y=5)
@@ -156,7 +156,7 @@ class gui():
         self.sigma_label.grid(row=7, column=0, padx=5, pady=5, sticky='w')
         self.sigma_box.grid(row=7, column=1, padx=5, pady=5, sticky='w')
         self.train_btn.grid(row=8, column=0, padx=5, pady=5, sticky='w')
-        self.save_graph_frame_btn.grid(row=8, column=1, padx=5, pady=5, sticky='w')
+        # self.save_graph_frame_btn.grid(row=8, column=1, padx=5, pady=5, sticky='w')
     
     def clear_hopfield_canvas(self):
         new_fig = Figure()
@@ -379,25 +379,25 @@ class gui():
     def open(self):
         self.container.mainloop()
 
-    def save_graph_frame(self):
-        # Get the frame's coordinates
-        try:
-            filename = asksaveasfilename(initialfile='Screenshot.png', defaultextension=".png", filetypes=[("All Files", "*.*"), ("Portable Graphics Format", "*.png")])
-            time.sleep(1)
-            if platform.system() == 'Windows' :
-                window = pygetwindow.getwindowswithTitle('Neural Network HW3 - Hopfield Network + Self-Organizing Map')[0]
-                left, top = window.topleft
-                right, bottom = window.bottomright
-                pyautogui.screenshot(filename)
+    # def save_graph_frame(self):
+    #     # Get the frame's coordinates
+    #     try:
+    #         filename = asksaveasfilename(initialfile='Screenshot.png', defaultextension=".png", filetypes=[("All Files", "*.*"), ("Portable Graphics Format", "*.png")])
+    #         time.sleep(1)
+    #         if platform.system() == 'Windows' :
+    #             window = pygetwindow.getwindowswithTitle('Neural Network HW3 - Hopfield Network + Self-Organizing Map')[0]
+    #             left, top = window.topleft
+    #             right, bottom = window.bottomright
+    #             pyautogui.screenshot(filename)
 
 
-            elif platform.system() == 'Darwin':
-                x, y, width, height = pygetwindow.getWindowGeometry('Neural Network HW3 - Hopfield Network + Self-Organizing Map')
-                image = pyautogui.screenshot(region=(int(x), int(y), int(width), int(height)), imageFilename=filename)
-                image.save(filename)
+    #         elif platform.system() == 'Darwin':
+    #             x, y, width, height = pygetwindow.getWindowGeometry('Neural Network HW3 - Hopfield Network + Self-Organizing Map')
+    #             image = pyautogui.screenshot(region=(int(x), int(y), int(width), int(height)), imageFilename=filename)
+    #             image.save(filename)
                     
-        except Exception as e:
-            print(e)
+    #     except Exception as e:
+    #         print(e)
 
     def train_model(self):
         # print(self.data, self.get_current_epoch(), self.get_current_lrn_rate())
