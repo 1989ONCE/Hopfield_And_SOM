@@ -6,6 +6,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import asksaveasfilename
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image, ImageGrab
 import pygetwindow
@@ -37,7 +38,7 @@ class gui():
 
         # components initialization
         self.graph_frame = tk.Frame(self.container, width=810, height=735, bg='white')
-        self.setting_frame = tk.Frame(self.container, width=500, height=735, bg='lightgrey')
+        self.setting_frame = tk.Frame(self.container, width=500, height=735, bg='white')
 
         self.som_canvas = FigureCanvasTkAgg(master = self.graph_frame)
         self.som_canvas.get_tk_widget().config(width=790, height=700)
@@ -48,10 +49,7 @@ class gui():
         self.hopfield_correct_canvas = FigureCanvasTkAgg(master = self.setting_frame)
         self.hopfield_correct_canvas.get_tk_widget().config(width=480, height=420)
         
-        # self.hopfield_noise_canvas = FigureCanvasTkAgg(master = self.graph_frame)
         self.hopfield_predict_canvas = FigureCanvasTkAgg(master = self.graph_frame)
-
-        # self.hopfield_noise_canvas.get_tk_widget().config(width=400, height=420, background='red')
         self.hopfield_predict_canvas.get_tk_widget().config(width=480, height=420)
 
         self.is_hopfield = False
@@ -125,7 +123,7 @@ class gui():
                      highlightbackground='white')
 
         # components placing
-        self.setting_frame.place(x=0, y=0)
+        self.setting_frame.place(x=10, y=5)
         self.graph_frame.place(x=515, y=5)
         self.som_canvas.get_tk_widget().place(x=10, y=20)
         self.som_canvas_2.get_tk_widget().grid(row=9, column=0, columnspan=2, padx=5, pady=5, sticky='w')
@@ -159,6 +157,15 @@ class gui():
         self.sigma_box.grid(row=7, column=1, padx=5, pady=5, sticky='w')
         self.train_btn.grid(row=8, column=0, padx=5, pady=5, sticky='w')
         self.save_graph_frame_btn.grid(row=8, column=1, padx=5, pady=5, sticky='w')
+    
+    def clear_hopfield_canvas(self):
+        new_fig = Figure()
+        self.hopfield_correct_canvas.figure = new_fig
+        self.hopfield_predict_canvas.figure = new_fig
+        self.hopfield_correct_canvas.draw()
+        self.hopfield_correct_canvas.get_tk_widget().update()
+        self.hopfield_predict_canvas.draw()
+        self.hopfield_predict_canvas.get_tk_widget().update()
 
     def clear_canvas(self):
         if self.som_figure:
@@ -168,18 +175,11 @@ class gui():
             self.som_figure_2.clf()
             self.som_canvas_2.draw_idle()
 
-        self.hopfield_correct_canvas.get_tk_widget().destroy()
-        self.hopfield_correct_canvas = FigureCanvasTkAgg(master = self.setting_frame)
-        self.hopfield_correct_canvas.get_tk_widget().config(width=480, height=420)
-
-        self.hopfield_predict_canvas.get_tk_widget().destroy()
-        self.hopfield_predict_canvas = FigureCanvasTkAgg(master = self.graph_frame)
-        self.hopfield_predict_canvas.get_tk_widget().config(width=480, height=420, background='white')
-
     # Determine is hopfield or SOM
     def switch(self):
         self.data = None
         self.clear_canvas()
+        self.clear_hopfield_canvas()
         self.train_btn.config(state='normal')
 
         if self.is_hopfield:
@@ -203,7 +203,6 @@ class gui():
             self.som_canvas.get_tk_widget().place(x=10, y=30)
             self.som_canvas_2.get_tk_widget().grid(row=9, column=0, columnspan=2, padx=5, pady=5, sticky='w')
             self.hopfield_correct_canvas.get_tk_widget().grid_forget()
-            # self.hopfield_noise_canvas.get_tk_widget().place_forget()
             self.hopfield_predict_canvas.get_tk_widget().place_forget()
             self.recall_btn.place_forget()
             self.prev_btn.grid_forget()
@@ -229,10 +228,8 @@ class gui():
             
             self.som_canvas.get_tk_widget().place_forget()
             self.som_canvas_2.get_tk_widget().grid_forget()
-            self.hopfield_correct_canvas.get_tk_widget().grid(row=9, column=0, columnspan=2, padx=5, pady=5, sticky='w')
-
-            # self.hopfield_noise_canvas.get_tk_widget().place(x=10, y=200)
-            self.hopfield_predict_canvas.get_tk_widget().place(x=10, y=170)
+            self.hopfield_correct_canvas.get_tk_widget().grid(row=9, column=0, columnspan=2)
+            self.hopfield_predict_canvas.get_tk_widget().place(x=10, y=155)
 
         self.dataDropDown.set('Select a Dataset')
 
@@ -281,14 +278,9 @@ class gui():
         self.recall_btn.place_forget()
         self.prev_btn.config(state='disabled')
         self.next_btn.config(state='normal')
+        self.clear_canvas()
 
         if self.is_hopfield:
-             # 清除之前的圖像
-            self.hopfield_correct_canvas.get_tk_widget().destroy()
-            self.hopfield_correct_canvas = FigureCanvasTkAgg(master=self.setting_frame)
-            self.hopfield_correct_canvas.get_tk_widget().config(width=480, height=420)
-            self.hopfield_correct_canvas.get_tk_widget().grid(row=9, column=0, columnspan=2, padx=5, pady=5, sticky='w')
-
             self.prev_btn.grid(row=10, column=0, padx=5, pady=5, sticky='w')
             self.next_btn.grid(row=10, column=1, padx=5, pady=5, sticky='w')
         
@@ -302,8 +294,6 @@ class gui():
             self.data = self.read_hopfield_file(self.get_path('data/hopfield/' + file_name)) 
             
             self.model = Hopfield()
-            # self.add_noise()
-            # self.model.setData(self.hopfield_noise_data)
             self.model.setData(self.data)
 
             if file_name == 'Basic_Training.txt':   
@@ -313,6 +303,7 @@ class gui():
 
             self.dim_text.config(text=self.dim)
             self.sample_num.config(text=len(self.data))
+            
             for i in range(len(self.data)):
                 pattern = self.data[i]
                 fig = self.draw_patterns(pattern, i, 'Pattern Answer')
@@ -324,15 +315,12 @@ class gui():
                 self.hopfield_predict_figure.append(fig)
             
             self.hopfield_correct_canvas.figure = self.hopfield_correct_figure[0]
-            self.hopfield_correct_canvas.draw_idle()
+            self.hopfield_correct_canvas.draw()
             self.hopfield_correct_canvas.get_tk_widget().update()
 
-            # self.hopfield_noise_canvas.figure = self.hopfield_noise_figure[0]
-            # self.hopfield_noise_canvas.draw_idle()
-            # self.hopfield_noise_canvas.get_tk_widget().update()
-
             self.hopfield_predict_canvas.figure = self.hopfield_predict_figure[0]
-            self.hopfield_predict_canvas.draw_idle()
+            self.hopfield_predict_canvas.draw()
+            self.hopfield_predict_canvas.get_tk_widget().update()
         else:
             self.data = self.read_som_file(self.get_path('data/som/' + file_name))
             self.dim = len(self.data[0]) - 1
@@ -342,7 +330,12 @@ class gui():
 
     def draw_patterns(self, data, index, type_name):
         fig, ax = plt.subplots(figsize=(4, 4))
-        ax.set_title(f'{type_name}: Pattern {index+1}')
+        if index is not None:
+            ax.set_title(f'{type_name}: Pattern {index+1}')
+        else:
+            ax.set_title(f'{type_name}')
+        
+        # 設置 x 軸和 y 軸的刻度為空
         ax.set_xticks([])
         ax.set_yticks([])
 
@@ -367,11 +360,10 @@ class gui():
         ax.set_xlim(0, self.column)
         ax.set_ylim(0, self.row)
 
-        plt.tight_layout(pad=0)  # 縮小圖形的邊距
-        plt.close()
-        return fig
-
+        # plt.tight_layout(pad=0)  # 縮小圖形的邊距
         
+        plt.close() # 關閉圖形，避免佔用記憶體
+        return fig
 
     def get_path(self, folder):
         if hasattr(sys, '_MEIPASS'):
@@ -471,7 +463,8 @@ class gui():
         try:
             correct_index = 0
             def update_hopfield_canvas(iter, new_pattern):
-                predict_figure = self.draw_patterns(new_pattern, 0, 'Recalled Pattern - Iteration ' + str(iter))
+                
+                predict_figure = self.draw_patterns(new_pattern, None, 'Recalled Pattern - Iteration ' + str(iter))
                 self.hopfield_predict_canvas.figure = predict_figure
                 self.hopfield_predict_canvas.draw_idle()
                 self.hopfield_predict_canvas.get_tk_widget().update()
@@ -483,7 +476,7 @@ class gui():
                 if self.hopfield_predict_canvas.figure == self.hopfield_predict_figure[i]:
                     self.predict_data = self.test_data[i]
                     correct_index = i
-                
+            
             new_pattern_data = self.model.recall(self.predict_data, 10, update_callback=update_hopfield_canvas)
             
             print('Recall completed')
@@ -518,35 +511,37 @@ class gui():
 
         for i in range(len(self.hopfield_correct_figure)):
             if self.hopfield_correct_canvas.figure == self.hopfield_correct_figure[i]:
-                    self.hopfield_correct_canvas.figure = self.hopfield_correct_figure[i-1]
-                    # self.hopfield_noise_canvas.figure = self.hopfield_noise_figure[i-1]
-                    self.hopfield_predict_canvas.figure = self.hopfield_predict_figure[i-1]
-                    if i-1 == 0 or i == 0:
-                        self.prev_btn.config(state='disabled')
-                    self.hopfield_correct_canvas.draw_idle()
-                    self.hopfield_correct_canvas.get_tk_widget().update()
-                    # self.hopfield_noise_canvas.draw_idle()
-                    # self.hopfield_noise_canvas.get_tk_widget().update()
-                    self.hopfield_predict_canvas.draw_idle()
-                    self.hopfield_predict_canvas.get_tk_widget().update()
-                    break
-    
+                self.clear_hopfield_canvas()
+                self.hopfield_correct_canvas.figure = self.hopfield_correct_figure[i-1]
+                self.hopfield_predict_canvas.figure = self.hopfield_predict_figure[i-1]
+                if i-1 == 0 or i == 0:
+                    self.prev_btn.config(state='disabled')
+                self.hopfield_correct_canvas.draw()
+                self.hopfield_correct_canvas.get_tk_widget().update()
+                   
+                self.hopfield_predict_canvas.draw()
+                self.hopfield_predict_canvas.get_tk_widget().update()
+                break
+
     def next_figure(self):
-        self.prev_btn.config(state='normal')
-        self.recall_btn.config(state='normal', text='Start Recall')
+        try:
+            self.prev_btn.config(state='normal')
+            self.recall_btn.config(state='normal', text='Start Recall')
+        except:
+            print('error')
+
         for i in range(len(self.hopfield_correct_figure)):
             if self.hopfield_correct_canvas.figure == self.hopfield_correct_figure[i]:
+                self.clear_hopfield_canvas()
                 self.hopfield_correct_canvas.figure = self.hopfield_correct_figure[i+1]
-                # self.hopfield_noise_canvas.figure = self.hopfield_noise_figure[i+1]
                 self.hopfield_predict_canvas.figure = self.hopfield_predict_figure[i+1]
                 if i+1 == len(self.hopfield_correct_figure) - 1 or i == len(self.hopfield_correct_figure) - 1:
                     self.next_btn.config(state='disabled')
                 
-                self.hopfield_correct_canvas.draw_idle()
+                self.hopfield_correct_canvas.draw()
                 self.hopfield_correct_canvas.get_tk_widget().update()
-                # self.hopfield_noise_canvas.draw_idle()
-                # self.hopfield_noise_canvas.get_tk_widget().update()
-                self.hopfield_predict_canvas.draw_idle()
+               
+                self.hopfield_predict_canvas.draw()
                 self.hopfield_predict_canvas.get_tk_widget().update()
                 break
     def add_noise(self):
