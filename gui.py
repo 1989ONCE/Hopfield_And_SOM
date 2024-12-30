@@ -198,6 +198,7 @@ class gui():
             self.sigma_box.grid(row=7, column=1, padx=5, pady=5, sticky='w')
             self.epoch_label.grid(row=5, column=0, padx=5, pady=5, sticky='w')
             self.epoch_box.grid(row=5, column=1, padx=5, pady=5, sticky='w')
+            self.lrn_rate_label.grid(row=6, column=0, padx=5, pady=5, sticky='w')
             self.lrn_rate_label.config(text='Learning Rate:')
             self.lrn_rate_box.config(from_=0.0, to=1.0, textvariable=tk.StringVar(value='0.8'))
             self.som_canvas.get_tk_widget().place(x=10, y=30)
