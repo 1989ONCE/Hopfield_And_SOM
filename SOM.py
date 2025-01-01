@@ -58,7 +58,7 @@ class SOM():
         self.mean = np.mean(x, axis=0, dtype=np.float64)
         self.std = np.std(x, axis=0, dtype=np.float64)
         # add epilson to avoid division by zero
-        if self.std.any() == 0:
+        if self.std.all() == 0:
             self.std += np.finfo(np.float64).eps
         normalized_x = (x - self.mean) / self.std
         return normalized_x
