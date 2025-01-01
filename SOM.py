@@ -1,6 +1,5 @@
-from sklearn.model_selection import train_test_split
 import numpy as np
-import random, math, time
+import math, time
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 

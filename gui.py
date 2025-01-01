@@ -4,15 +4,9 @@ import numpy as np
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-from tkinter.filedialog import asksaveasfilename
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from PIL import Image, ImageGrab
-# import pygetwindow
-# import pyautogui
-import platform
-import time
 from SOM import SOM
 from Hopfield import Hopfield
 
