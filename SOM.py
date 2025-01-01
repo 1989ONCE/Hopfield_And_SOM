@@ -1,6 +1,5 @@
-from sklearn.model_selection import train_test_split
 import numpy as np
-import random, math, time
+import math, time
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
@@ -58,7 +57,10 @@ class SOM():
     def normalize_whole_list(self, x):
         self.mean = np.mean(x, axis=0, dtype=np.float64)
         self.std = np.std(x, axis=0, dtype=np.float64)
-        normalized_x  = (x - self.mean) / (self.std)
+        # add epilson to avoid division by zero
+        if self.std.any() == 0:
+            self.std += np.finfo(np.float64).eps
+        normalized_x = (x - self.mean) / self.std
         return normalized_x
     
     def denormalize_whole_list(self, x):
