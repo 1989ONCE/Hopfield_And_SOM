@@ -201,6 +201,7 @@ class gui():
             self.lrn_rate_label.grid(row=6, column=0, padx=5, pady=5, sticky='w')
             self.lrn_rate_label.config(text='Learning Rate:')
             self.lrn_rate_box.config(from_=0.0, to=1.0, textvariable=tk.StringVar(value='0.8'))
+            self.lrn_rate_box.grid(row=6, column=1, padx=5, pady=5, sticky='w')
             self.som_canvas.get_tk_widget().place(x=10, y=30)
             self.som_canvas_2.get_tk_widget().grid(row=9, column=0, columnspan=2, padx=5, pady=5, sticky='w')
             self.hopfield_correct_canvas.get_tk_widget().grid_forget()
